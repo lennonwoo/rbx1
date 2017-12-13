@@ -8,7 +8,6 @@
 
 import rospy
 import cv2
-from cv2 import cv as cv
 from rbx1_vision.ros2opencv2 import ROS2OpenCV2
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
@@ -30,18 +29,18 @@ class CamShiftNode(ROS2OpenCV2):
                        
         # Create a number of windows for displaying the histogram,
         # parameters controls, and backprojection image
-        cv.NamedWindow("Histogram", cv.CV_WINDOW_NORMAL)
-        cv.MoveWindow("Histogram", 700, 50)
-        cv.NamedWindow("Parameters", 0)
-        cv.MoveWindow("Parameters", 700, 325)
-        cv.NamedWindow("Backproject", 0)
-        cv.MoveWindow("Backproject", 700, 600)
+        cv2.namedWindow("Histogram", cv2.WINDOW_NORMAL)
+        cv2.moveWindow("Histogram", 700, 50)
+        cv2.namedWindow("Parameters", 0)
+        cv2.moveWindow("Parameters", 700, 325)
+        cv2.namedWindow("Backproject", 0)
+        cv2.moveWindow("Backproject", 700, 600)
         
         # Create the slider controls for saturation, value and threshold
-        cv.CreateTrackbar("Saturation", "Parameters", self.smin, 255, self.set_smin)
-        cv.CreateTrackbar("Min Value", "Parameters", self.vmin, 255, self.set_vmin)
-        cv.CreateTrackbar("Max Value", "Parameters", self.vmax, 255, self.set_vmax)
-        cv.CreateTrackbar("Threshold", "Parameters", self.threshold, 255, self.set_threshold)
+        cv2.createTrackbar("Saturation", "Parameters", self.smin, 255, self.set_smin)
+        cv2.createTrackbar("Min Value", "Parameters", self.vmin, 255, self.set_vmin)
+        cv2.createTrackbar("Max Value", "Parameters", self.vmax, 255, self.set_vmax)
+        cv2.createTrackbar("Threshold", "Parameters", self.threshold, 255, self.set_threshold)
         
         # Initialize a number of variables
         self.hist = None
@@ -85,7 +84,7 @@ class CamShiftNode(ROS2OpenCV2):
                 self.hist = cv2.calcHist( [hsv_roi], [0], mask_roi, [16], [0, 180] )
                 cv2.normalize(self.hist, self.hist, 0, 255, cv2.NORM_MINMAX);
                 self.hist = self.hist.reshape(-1)
-                self.show_hist()
+                self.queue.put((show_hist, (self, ), {}))
     
             if self.detect_box is not None:
                 self.selection = None
@@ -99,7 +98,7 @@ class CamShiftNode(ROS2OpenCV2):
                 backproject &= mask
     
                 # Threshold the backprojection
-                ret, backproject = cv2.threshold(backproject, self.threshold, 255, cv.CV_THRESH_TOZERO)
+                ret, backproject = cv2.threshold(backproject, self.threshold, 255, cv2.THRESH_TOZERO)
     
                 x, y, w, h = self.track_window
                 if self.track_window is None or w <= 0 or h <=0:
@@ -112,7 +111,7 @@ class CamShiftNode(ROS2OpenCV2):
                 self.track_box, self.track_window = cv2.CamShift(backproject, self.track_window, term_crit)
     
                 # Display the resulting backprojection
-                cv2.imshow("Backproject", backproject)
+                self.queue.put((cv2.imshow, ("Backproject", backproject), {}))
         except:
             pass
 
@@ -131,22 +130,22 @@ class CamShiftNode(ROS2OpenCV2):
 
     def hue_histogram_as_image(self, hist):
             """ Returns a nice representation of a hue histogram """
-            histimg_hsv = cv.CreateImage((320, 200), 8, 3)
+            histimg_hsv = cv2.createImage((320, 200), 8, 3)
             
-            mybins = cv.CloneMatND(hist.bins)
-            cv.Log(mybins, mybins)
-            (_, hi, _, _) = cv.MinMaxLoc(mybins)
-            cv.ConvertScale(mybins, mybins, 255. / hi)
+            mybins = cv2.cloneMatND(hist.bins)
+            cv2.log(mybins, mybins)
+            (_, hi, _, _) = cv2.minMaxLoc(mybins)
+            cv2.convertScale(mybins, mybins, 255. / hi)
     
-            w,h = cv.GetSize(histimg_hsv)
-            hdims = cv.GetDims(mybins)[0]
+            w,h = cv2.getSize(histimg_hsv)
+            hdims = cv2.getDims(mybins)[0]
             for x in range(w):
                 xh = (180 * x) / (w - 1)  # hue sweeps from 0-180 across the image
                 val = int(mybins[int(hdims * x / w)] * h / 255)
                 cv2.rectangle(histimg_hsv, (x, 0), (x, h-val), (xh,255,64), -1)
                 cv2.rectangle(histimg_hsv, (x, h-val), (x, h), (xh,255,255), -1)
     
-            histimg = cv2.cvtColor(histimg_hsv, cv.CV_HSV2BGR)
+            histimg = cv2.cvtColor(histimg_hsv, cv2.COLOR_HSV2BGR)
             
             return histimg
          
@@ -154,7 +153,7 @@ class CamShiftNode(ROS2OpenCV2):
 if __name__ == '__main__':
     try:
         node_name = "camshift"
-        CamShiftNode(node_name)
+        CamShiftNode(node_name).update_ui()
         try:
             rospy.init_node(node_name)
         except:
@@ -162,5 +161,5 @@ if __name__ == '__main__':
         rospy.spin()
     except KeyboardInterrupt:
         print "Shutting down vision node."
-        cv.DestroyAllWindows()
+        cv2.destroyAllWindows()
 

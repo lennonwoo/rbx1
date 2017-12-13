@@ -44,7 +44,7 @@ class ROS2OpenCV2(object):
         rospy.init_node(node_name)
         rospy.loginfo("Starting node " + str(node_name))
 
-        rospy.on_shutdown(self.exit_loop)
+        rospy.on_shutdown(self.stop_update_ui)
         
         # A number of parameters to determine what gets displayed on the
         # screen. These can be overridden the appropriate launch file
@@ -88,19 +88,10 @@ class ROS2OpenCV2(object):
 
         # use Queue to handle ui update
         self.queue = Queue.Queue()
-        self.loop_continue = True
-        
-        # Create the main display window
-        self.cv_window_name = self.node_name
-        cv2.namedWindow(self.cv_window_name, cv2.WINDOW_NORMAL)
-        if self.resize_window_height > 0 and self.resize_window_width > 0:
-            cv2.ResizeWindow(self.cv_window_name, self.resize_window_width, self.resize_window_height)
+        self._update_continue = True
 
         # Create the cv_bridge object
         self.bridge = CvBridge()
-        
-        # Set a call back on mouse clicks on the image window
-        cv2.setMouseCallback (self.node_name, self.on_mouse_click, None)
         
         # Subscribe to the image and depth topics and set the appropriate callbacks
         # The image topic names can be remapped in the appropriate launch file
@@ -202,7 +193,7 @@ class ROS2OpenCV2(object):
                     cv2.rectangle(self.display_image, pt1, pt2, (50, 255, 50), self.feature_size, 8, 0)
                 else:
                     # Otherwise, display a rotated rectangle
-                    vertices = np.int0(cv2.cv.BoxPoints(self.track_box))
+                    vertices = np.int0(cv2.boxPoints(self.track_box))
                     cv2.drawContours(self.display_image, [vertices], 0, (50, 255, 50), self.feature_size)
 
             # If we don't yet have a track box, display the detect box if present
@@ -242,7 +233,6 @@ class ROS2OpenCV2(object):
             cv2.putText(self.display_image, "RES: " + str(self.frame_size[0]) + "X" + str(self.frame_size[1]), (10, voffset), font_face, font_scale, (255, 255, 0))
         
         # Update the image display
-        # cv2.imshow(self.node_name, self.display_image)
         self.queue.put((cv2.imshow, (self.node_name, self.display_image,), {}))
         
                 
@@ -370,17 +360,26 @@ class ROS2OpenCV2(object):
             
         return list(box2d)
         
-    def exit_loop(self):
-        self.loop_continue = False
+    def stop_update_ui(self):
+        self._update_continue = False
 
-    def loop(self):
-        while self.loop_continue:
+    def update_ui(self):
+        # Create the main display window
+        self.cv_window_name = self.node_name
+        cv2.namedWindow(self.cv_window_name, cv2.WINDOW_NORMAL)
+        if self.resize_window_height > 0 and self.resize_window_width > 0:
+            cv2.ResizeWindow(self.cv_window_name, self.resize_window_width, self.resize_window_height)
+        
+        # Set a call back on mouse clicks on the image window
+        cv2.setMouseCallback (self.node_name, self.on_mouse_click, None)
+
+        while self._update_continue:
             # print self.queue.qsize()
             func, args, argv = self.queue.get()
             func(*args, **argv)
             # print self.queue.qsize()
 
-            self.keystroke = cv2.waitKey(25)
+            self.keystroke = cv2.waitKey(35)
             if self.keystroke is not None and self.keystroke != -1:
                 try:
                     cc = chr(self.keystroke & 255).lower()

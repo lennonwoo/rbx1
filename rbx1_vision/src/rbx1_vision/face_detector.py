@@ -68,8 +68,6 @@ class FaceDetector(ROS2OpenCV2):
         self.misses = 0
         self.hit_rate = 0
 
-        self.loop()
-
     def process_image(self, cv_image):
         try:
             # Create a greyscale version of the image
@@ -141,7 +139,7 @@ def trunc(f, n):
 if __name__ == '__main__':
     try:
         node_name = "face_detector"
-        FaceDetector(node_name)
+        FaceDetector(node_name).update_ui()
         rospy.spin()
     except KeyboardInterrupt:
         print "Shutting down face detector node."

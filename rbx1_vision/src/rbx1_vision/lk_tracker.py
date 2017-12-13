@@ -22,7 +22,6 @@
 
 import rospy
 import cv2
-import cv2.cv as cv
 import numpy as np
 from rbx1_vision.good_features import GoodFeatures
 
@@ -130,7 +129,7 @@ class LKTracker(GoodFeatures):
                 new_keypoints.append((x, y))
                 
                 # Draw the keypoint on the image
-                cv2.circle(self.marker_image, (x, y), self.feature_size, (0, 255, 0, 0), cv.CV_FILLED, 8, 0)
+                cv2.circle(self.marker_image, (x, y), self.feature_size, (0, 255, 0, 0), cv2.FILLED, 8, 0)
             
             # Set the global keypoint list to the new list    
             self.keypoints = new_keypoints
@@ -152,9 +151,9 @@ class LKTracker(GoodFeatures):
 if __name__ == '__main__':
     try:
         node_name = "lk_tracker"
-        LKTracker(node_name)
+        LKTracker(node_name).update_ui()
         rospy.spin()
     except KeyboardInterrupt:
         print "Shutting down LK Tracking node."
-        cv.DestroyAllWindows()
+        cv2.destroyAllWindows()
     
