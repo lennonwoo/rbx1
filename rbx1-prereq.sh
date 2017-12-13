@@ -21,11 +21,7 @@ ros-kinetic-amcl git
 # audio see you later
 # ros-kinetic-audio-common ros-kinetic-pocketsphinx gstreamer0.10-pocketsphinx \
 
-# version control see you later
-# subversion mercurial
-
-# don't have kokuyo
-# ros-kinetic-hokuyo-node
-
-# TX2 have its own version
+# TX2 don't need these
 # libopencv-dev
+# ros-kinetic-hokuyo-node
+# subversion mercurial
