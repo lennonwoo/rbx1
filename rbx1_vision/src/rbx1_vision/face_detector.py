@@ -24,7 +24,6 @@
 
 import rospy
 import cv2
-import cv2.cv as cv
 from rbx1_vision.ros2opencv2 import ROS2OpenCV2
 
 class FaceDetector(ROS2OpenCV2):
@@ -52,7 +51,8 @@ class FaceDetector(ROS2OpenCV2):
         # Store all parameters together for passing to the detector
         self.haar_params = dict(scaleFactor = self.haar_scaleFactor,
                                 minNeighbors = self.haar_minNeighbors,
-                                flags = cv.CV_HAAR_DO_CANNY_PRUNING,
+                                # flags = cv2.HAAR_DO_CANNY_PRUNING,
+                                flags = 1,
                                 minSize = (self.haar_minSize, self.haar_minSize),
                                 maxSize = (self.haar_maxSize, self.haar_maxSize)
                                 )
@@ -67,6 +67,8 @@ class FaceDetector(ROS2OpenCV2):
         self.hits = 0
         self.misses = 0
         self.hit_rate = 0
+
+        self.loop()
 
     def process_image(self, cv_image):
         try:
@@ -116,7 +118,7 @@ class FaceDetector(ROS2OpenCV2):
                 font_scale = 0.5
                 cv2.putText(self.marker_image, "LOST FACE!", 
                             (int(self.frame_size[0] * 0.65), int(self.frame_size[1] * 0.9)), 
-                            font_face, font_scale, cv.RGB(255, 50, 50))
+                            font_face, font_scale, (255, 50, 50))
             face_box = None
 
         # Display the hit rate so far
@@ -126,7 +128,7 @@ class FaceDetector(ROS2OpenCV2):
             cv2.putText(self.marker_image, "Hit Rate: " + 
                         str(trunc(self.hit_rate, 2)), 
                         (20, int(self.frame_size[1] * 0.9)), 
-                        font_face, font_scale, cv.RGB(255, 255, 0))
+                        font_face, font_scale, (255, 255, 0))
         
         return face_box
 

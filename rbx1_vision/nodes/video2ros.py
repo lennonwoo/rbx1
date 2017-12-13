@@ -23,7 +23,6 @@
 
 import rospy
 import sys
-from cv2 import cv as cv
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -76,10 +75,10 @@ class Video2ROS:
         self.capture = cv2.VideoCapture(self.input)
         
         # Get the original frames per second
-        fps = self.capture.get(cv.CV_CAP_PROP_FPS)
+        fps = self.capture.get(cv2.CAP_PROP_FPS)
         
         # Get the original frame size
-        self.frame_size = (self.capture.get(cv.CV_CAP_PROP_FRAME_HEIGHT), self.capture.get(cv.CV_CAP_PROP_FRAME_WIDTH))
+        self.frame_size = (self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT), self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         
         # Check that we actually have a valid video source
         if fps == 0.0:
@@ -93,8 +92,8 @@ class Video2ROS:
             fps = self.fps
     
         # Create the display window
-        cv.NamedWindow("Video Playback", True) # autosize the display
-        cv.MoveWindow("Video Playback", 375, 25)
+        cv2.namedWindow("Video Playback", True) # autosize the display
+        cv2.moveWindow("Video Playback", 375, 25)
 
         # Create the CvBridge object
         bridge = CvBridge()
@@ -106,6 +105,7 @@ class Video2ROS:
             
             # Convert the frame to ROS format
             try:
+                # The video2ros key part
                 image_pub.publish(bridge.cv2_to_imgmsg(frame, "bgr8"))
             except CvBridgeError, e:
                 print e
@@ -114,13 +114,13 @@ class Video2ROS:
             display_image = frame.copy()
             
             if self.show_text:
-                cv2.putText(display_image, "FPS: " + str(self.fps), (10, 20), font_face, font_scale, cv.RGB(255, 255, 0))
-                cv2.putText(display_image, "Keyboard commands:", (20, int(self.frame_size[0] * 0.6)), font_face, font_scale, cv.RGB(255, 255, 0))
-                cv2.putText(display_image, " ", (20, int(self.frame_size[0] * 0.65)), font_face, font_scale, cv.RGB(255, 255, 0))
-                cv2.putText(display_image, "space - toggle pause/play", (20, int(self.frame_size[0] * 0.72)), font_face, font_scale, cv.RGB(255, 255, 0))
-                cv2.putText(display_image, "     r - restart video from beginning", (20, int(self.frame_size[0] * 0.79)), font_face, font_scale, cv.RGB(255, 255, 0))
-                cv2.putText(display_image, "     t - hide/show this text", (20, int(self.frame_size[0] * 0.86)), font_face, font_scale, cv.RGB(255, 255, 0))
-                cv2.putText(display_image, "     q - quit the program", (20, int(self.frame_size[0] * 0.93)), font_face, font_scale, cv.RGB(255, 255, 0))
+                cv2.putText(display_image, "FPS: " + str(self.fps), (10, 20), font_face, font_scale, (255, 255, 0))
+                cv2.putText(display_image, "Keyboard commands:", (20, int(self.frame_size[0] * 0.6)), font_face, font_scale, (255, 255, 0))
+                cv2.putText(display_image, " ", (20, int(self.frame_size[0] * 0.65)), font_face, font_scale, (255, 255, 0))
+                cv2.putText(display_image, "space - toggle pause/play", (20, int(self.frame_size[0] * 0.72)), font_face, font_scale, (255, 255, 0))
+                cv2.putText(display_image, "     r - restart video from beginning", (20, int(self.frame_size[0] * 0.79)), font_face, font_scale, (255, 255, 0))
+                cv2.putText(display_image, "     t - hide/show this text", (20, int(self.frame_size[0] * 0.86)), font_face, font_scale, (255, 255, 0))
+                cv2.putText(display_image, "     q - quit the program", (20, int(self.frame_size[0] * 0.93)), font_face, font_scale, (255, 255, 0))
             
             # Merge the original image and the display image (text overlay)
             display_image = cv2.bitwise_or(frame, display_image)
@@ -129,7 +129,7 @@ class Video2ROS:
             cv2.imshow("Video Playback", display_image)
                     
             """ Handle keyboard events """
-            self.keystroke = cv.WaitKey(1000 / fps)
+            self.keystroke = cv2.waitKey(1000 / fps)
 
             """ Process any keyboard commands """
             if self.keystroke != -1:
